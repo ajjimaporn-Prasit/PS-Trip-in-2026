@@ -750,25 +750,35 @@ const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
 const slideNum = document.getElementById('slide-num');
 
-let currentSlide = 0;
+ let currentSlide = 0;
+    const totalSlides = 10;
 
-function updateSlide() {
-  slides.forEach(slide => slide.classList.remove('active'));
-  slides[currentSlide].classList.add('active');
-  slideNum.textContent = `หน้า ${currentSlide + 1} / ${slides.length}`;
-}
+    function changeSlide(direction) {
+        // ซ่อนหน้าปัจจุบัน
+        document.getElementById(`slide-${currentSlide}`).classList.remove('active');
+        
+        // คำนวณหน้าใหม่ (ป้องกันการออกนอกขอบเขต 0 - 9)
+        currentSlide += direction;
+        if (currentSlide >= totalSlides) currentSlide = 0;
+        if (currentSlide < 0) currentSlide = totalSlides - 1;
+        
+        // แสดงหน้าใหม่
+        document.getElementById(`slide-${currentSlide}`).classList.add('active');
+        
+        // อัปเดตตัวเลขหน้าแสดงผล
+        document.getElementById('pageIndicator').innerText = `SLIDE: ${currentSlide + 1} / ${totalSlides}`;
+    }
 
-nextBtn.addEventListener('click', () => {
-  if (currentSlide < slides.length - 1) { currentSlide++; } 
-  else { currentSlide = 0; }
-  updateSlide();
-});
-
-prevBtn.addEventListener('click', () => {
-  if (currentSlide > 0) { currentSlide--; } 
-  else { currentSlide = slides.length - 1; }
-  updateSlide();
-});
+    // รองรับการกดปุ่มบนแป้นพิมพ์ (Keyboard) แบบไฟล์ PowerPoint จริง
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'Enter') {
+            event.preventDefault();
+            changeSlide(1); // ไปหน้าถัดไป
+        } else if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            changeSlide(-1); // ย้อนไปหน้าก่อนหน้า
+        }
+    });
 
 // ฟังก์ชันอัจฉริยะปรับขนาดหน้าสไลด์ 1280px ให้พอดีจอมือถืออัตโนมัติ และรองรับการซูมด้วยนิ้ว
 function autoScalePPT() {
