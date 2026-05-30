@@ -21,16 +21,43 @@
             overflow-x: hidden;
         }
 
-        /* PPT Presentation Wrapper */
-        .ppt-wrapper {
-            position: relative;
-            width: 1280px;
-            height: 720px;
-            background: #0f172a;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            border-radius: 12px;
-            overflow: hidden;
-        }
+        /* ปรับตัวจัดระเบียบหน้าจอหลัก */
+	body { 
+    	background-color: #1e293b; 
+    	font-family: 'Prompt', sans-serif; 
+    	display: flex; 
+    	flex-direction: column; 
+    	align-items: center; 
+    	justify-content: flex-start; /* เปลี่ยนเป็นเริ่มจากด้านบนเพื่อรองรับมือถือ */
+    	min-height: 100vh;
+    	padding: 10px;
+    	margin: 0;
+	}
+	
+	/* ปรับ Wrapper สไลด์ต้นฉบับ */
+	.ppt-wrapper {
+    	position: relative;
+    	width: 1280px;
+    	height: 720px;
+    	background: #0f172a;
+    	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    	border-radius: 12px;
+    	overflow: hidden;
+    	/* เพิ่มส่วนนี้เพื่อให้ระบบหดสเกลและซูมได้อย่างปลอดภัย */
+    	flex-shrink: 0; 
+	}
+	
+	/* ปุ่มควบคุมให้อยู่ในระยะที่เหมาะสม */
+	.nav-controls {
+    	display: flex;
+    	gap: 20px;
+    	margin-top: 20px;
+    	margin-bottom: 30px;
+    	align-items: center;
+    	z-index: 100; /* อยู่เหนือกองสไลด์เสมอ */
+	}
+
+
 
         /* Slide Control Mechanics */
         .slide {
@@ -718,35 +745,56 @@
 </div>
 
 <script>
-    let currentSlide = 0;
-    const totalSlides = 10;
+    const slides = document.querySelectorAll('.slide');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const slideNum = document.getElementById('slide-num');
 
-    function changeSlide(direction) {
-        // ซ่อนหน้าปัจจุบัน
-        document.getElementById(`slide-${currentSlide}`).classList.remove('active');
-        
-        // คำนวณหน้าใหม่ (ป้องกันการออกนอกขอบเขต 0 - 9)
-        currentSlide += direction;
-        if (currentSlide >= totalSlides) currentSlide = 0;
-        if (currentSlide < 0) currentSlide = totalSlides - 1;
-        
-        // แสดงหน้าใหม่
-        document.getElementById(`slide-${currentSlide}`).classList.add('active');
-        
-        // อัปเดตตัวเลขหน้าแสดงผล
-        document.getElementById('pageIndicator').innerText = `SLIDE: ${currentSlide + 1} / ${totalSlides}`;
-    }
+let currentSlide = 0;
 
-    // รองรับการกดปุ่มบนแป้นพิมพ์ (Keyboard) แบบไฟล์ PowerPoint จริง
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'Enter') {
-            event.preventDefault();
-            changeSlide(1); // ไปหน้าถัดไป
-        } else if (event.key === 'ArrowLeft') {
-            event.preventDefault();
-            changeSlide(-1); // ย้อนไปหน้าก่อนหน้า
-        }
-    });
+function updateSlide() {
+  slides.forEach(slide => slide.classList.remove('active'));
+  slides[currentSlide].classList.add('active');
+  slideNum.textContent = `หน้า ${currentSlide + 1} / ${slides.length}`;
+}
+
+nextBtn.addEventListener('click', () => {
+  if (currentSlide < slides.length - 1) { currentSlide++; } 
+  else { currentSlide = 0; }
+  updateSlide();
+});
+
+prevBtn.addEventListener('click', () => {
+  if (currentSlide > 0) { currentSlide--; } 
+  else { currentSlide = slides.length - 1; }
+  updateSlide();
+});
+
+// ฟังก์ชันอัจฉริยะปรับขนาดหน้าสไลด์ 1280px ให้พอดีจอมือถืออัตโนมัติ และรองรับการซูมด้วยนิ้ว
+function autoScalePPT() {
+  const wrapper = document.querySelector('.ppt-wrapper');
+  if (!wrapper) return;
+  
+  // คำนวณความกว้างหน้าจอมือถือปัจจุบัน (หักลบขอบข้างออกเล็กน้อย)
+  const windowWidth = window.innerWidth - 20; 
+  const pptWidth = 1280; // ขนาดคงที่ของสไลด์คุณ
+  
+  if (windowWidth < pptWidth) {
+    // หาอัตราส่วนที่ต้องย่อลง
+    const scaleRatio = windowWidth / pptWidth;
+    
+    // ใช้คำสั่ง zoom เพื่อให้ย่อลงพอดีจอ แต่ระบบสัมผัสเบราว์เซอร์ยังสามารถกางนิ้วซูมเข้าออกได้
+    wrapper.style.zoom = scaleRatio;
+  } else {
+    wrapper.style.zoom = 1;
+  }
+}
+
+// สั่งทำงานทันทีที่เปิดเว็บ และทุกครั้งที่หมุนหน้าจอมือถือ
+window.addEventListener('resize', autoScalePPT);
+window.addEventListener('DOMContentLoaded', autoScalePPT);
+// เรียกทำงานซ้ำสั้นๆ เผื่อกรณีอินเทอร์เน็ตโหลดหน้าเว็บช้าบนมือถือ
+setTimeout(autoScalePPT, 300);
 </script>
 
 </body>
